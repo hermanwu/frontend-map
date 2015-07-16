@@ -1,47 +1,130 @@
+//YelpOAuth class
+var YelpOAuth = function() {
+    this.auth = {
+            consumerKey: "nsJaztWB593lsptA2C61gw",
+            consumerSecret: "MDea2Xt-0joFt22F8DYqCo2pgcY",
+            accessToken: "dCFwVSf6hSapbCrAf7Uyd9qsSsGWLvuc",
+            accessTokenSecret: "Z5KK2Wq_89AUoKMr6Uc6kxDzDbc",
+            serviceProvider: {signatureMethod: "HMAC-SHA1"}
+        };
+  this.accesor = {
+              consumerSecret: this.auth.consumerSecret,
+              tokenSecret: this.auth.accessTokenSecret
+              };
+  this.parameters = [
+                      //parameter for search
+                      //parameters.push(['term', terms]);
+                      //parameters.push(['location', near]);
+                      ['callback', 'cb'],
+                      ['oauth_consumer_key', this.auth.consumerKey],
+                      ['oauth_consumer_secret', this.auth.consumerSecret],
+                      ['oauth_token', this.auth.accessToken],
+                      ['oauth_signature_method', 'HMAC-SHA1']
+                    ];
+};
+
+
+
+YelpOAuth.prototype.getYelpBusinessInfo = function(location, callback) {
+    var businessUrl = 'http://api.yelp.com/v2/business/' + location.yelpId;
+    var message = {
+                    'action': businessUrl,
+                    'method': 'GET',
+                    'parameters': this.parameters
+                  }
+    var _accesor = this.accesor;
+  OAuth.setTimestampAndNonce(message);
+  OAuth.SignatureMethod.sign(message, _accesor);
+  var parameterMap = OAuth.getParameterMap(message.parameters);
+  parameterMap.oauth_signature = OAuth.percentEncode(parameterMap.oauth_signature);
+  $.ajax({
+    'url': message.action,
+    'data': parameterMap,
+    'cache': true,
+    'dataType': 'jsonp',
+    //'jsonpCallback': 'cb',
+    'success': function(data, textStats, XMLHttpRequest) {
+
+        var position = {
+            lat: data.location.coordinate.latitude,
+            lng: data.location.coordinate.longitude
+        }
+
+        location.marker.setPosition(position);
+
+        var yelpName = '<h3>' + data.name + '<h3>';
+        var yelpStar = '<img src="' + data.rating_img_url + '" alt="yelp star rating">';
+
+        var contentHTML = yelpName + yelpStar;
+
+        //location.marker.setPosition(data)
+        location.infowindow.setContent(contentHTML);
+        //console.log(textStats);
+        //console.log(data);
+        //$("body").append(data);
+
+
+        var LatLngPoint = new google.maps.LatLng(position.lat, position.lng);
+        callback(LatLngPoint);
+    },
+    'error': function(XMLHttpRequest, textStats, errorThrown){
+      console.log(errorThrown);
+    }
+  });
+};
+
+
+
+// global map variable
 var map;
 
+//initialize map
+google.maps.event.addDomListener(window, 'load', initialize);
+
+// location input
 var locationData = [
         {
-            title: "Home",
-            position: {lat: 38.9276490, lng: -77.2380320},
-            matchingIndex: 0
-        },
-        {
             title: "Maple Ave Restaurant",
-            position: {lat: 38.900498, lng: -77.266858},
-            matchingIndex: 0
+            matchingIndex: 0,
+            yelpId: 'maple-ave-restaurant-vienna'
         },
         {
             title: "Cava Mezze Grill",
-            position: {lat: 38.933868, lng: -77.17726},
-            matchingIndex: 0
+            matchingIndex: 0,
+            yelpId: 'cava-mezze-grill-mclean'
         },
         {
             title: "Nielsens Frozen Custard",
-            position: {lat: 38.900899, lng: -77.267318},
-            matchingIndex: 0
+            matchingIndex: 0,
+            yelpId: 'nielsens-frozen-custard-vienna'
         },
         {
             title: "Asia Taste",
-            position: {lat: 39.105290, lng: -77.157558},
-            matchingIndex: 0
+            matchingIndex: 0,
+            yelpId: 'asia-taste-rockville-3'
         }
 ];
 
+
+var yelpOAuth = new YelpOAuth();
+
 var Location = function(data){
     this.title = data.title;
-    this.position = data.position;
     this.matchingIndex = data.matchingIndex;
     this.visibility = true;
+    //var yelpOAuth = new YelpOAuth();
+
+    this.yelpId = data.yelpId;
+
+    //yelpOAuth.getYelpBusinessInfo(data.yelpId);
 }
 
 var locationArray = [];
 for (var i = 0; i < locationData.length; i ++){
     locationArray.push(new Location(locationData[i]));
+
 }
 
-
-var markers = [];
 
 
 
@@ -61,32 +144,29 @@ var ViewModel = function(){
         console.log(self.places()[i].visibility);
     }
 
-    self.test = function(place) {
-        //console.log(place.title);
-        place.marker.open(map, place.marker);
-    }
 
     self.searchBarText.subscribe(function(newValue) {
         self.match();
+
     });
 
     self.match = function() {
         //console.log(element);
-        
+
         var text = self.searchBarText().toLowerCase();
-        //console.log(self.searchBarText);
-        //console.log(self.places);
-        ko.utils.arrayForEach(self.places(), function(place) {
+        ko.utils.arrayForEach(self.places(), function(place, index) {
+            console.log(locationArray[index].marker.visible);
             if (place.title().toLowerCase().search(text) < 0) {
                 place.visibility(false);
+                locationArray[index].marker.setVisible(false);
+                locationArray[index].infowindow.close();
             }
             else {
                 place.visibility(true);
+                locationArray[index].marker.setVisible(true);
             }
         });
     }
-
-
 }
 
 ko.applyBindings(new ViewModel());
@@ -96,58 +176,52 @@ ko.applyBindings(new ViewModel());
 function initialize() {
 
     var mapOptions = {
-          center: locationArray[0].position,
-          zoom: 13
-        };
+          center: { lat: 38.9047, lng: -77.0164},
+          zoom: 20
+    };
 
-    map = new google.maps.Map(document.getElementById('map-canvas'),
-            mapOptions);
+    map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
 
-
-    var latlngbounds = new google.maps.LatLngBounds();
     var numOfLocation = locationArray.length;
 
+    var bounds = new google.maps.LatLngBounds();
 
-    for(var i = 0; i < numOfLocation; i++){
-        /*
-        var marker = new google.maps.Marker({
-            map: map,
-            position: locationArray[i].position,
-            clickable: true
-        });
-        marker.info = new google.maps.InfoWindow({
-            content: locationArray[i].title
-        });
-        locationArray[i].marker = marker;
+        for(var i = 0; i < numOfLocation; i++){
+            createMarker(locationArray[i], bounds);
 
-        google.maps.event.addListener(marker, 'click', function() {
-            this.info.open(map);
-        });
-        */
-        var LatLngPoint = new google.maps.LatLng(locationArray[i].position.lat,
-            locationArray[i].position.lng);
-        latlngbounds.extend(LatLngPoint);
-    }
-    map.fitBounds(latlngbounds);
+            /*
+            var LatLngPoint = new google.maps.LatLng(locationArray[i].position.lat,
+                locationArray[i].position.lng);
+            latlngbounds.extend(LatLngPoint);
+            */
+        }
+
 }
 
-/*
-function filter(element){
-    var value = $(element).val().toLowerCase();
-    $("#places > li").each(function(){
-        var locationIndex = $("li").index($(this));
-        var marker = locationArray[locationIndex].marker;
-        if ($(this).text().toLowerCase().search(value) > -1) {
-            $(this).show();
-            marker.setVisible(true);
+function createMarker(location, bounds) {
+    var contentString = location.name;
 
-        }
-        else{
-            $(this).hide();
-            marker.setVisible(false);
-        }
+    var marker = new google.maps.Marker({
+            map: map
+        //zIndex: Math.round(latlng.lat()*-100000)<<5
+        });
+
+
+   var infowindow = new google.maps.InfoWindow();
+
+    google.maps.event.addListener(marker, 'click', function() {
+        infowindow.open(map, marker);
     });
-}
-*/
 
-google.maps.event.addDomListener(window, 'load', initialize);
+    location.marker = marker;
+    location.infowindow = infowindow;
+
+    yelpOAuth.getYelpBusinessInfo(location, function(data){
+        bounds.extend(data);
+        map.fitBounds(bounds);
+    });
+
+}
+
+
+
