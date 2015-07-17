@@ -1,53 +1,40 @@
-/*
-* {box-sizing:border-box;}
-body {background-color: #CCC;}
 
-.bgimg {
-    position:fixed;
-    top: 0;
-    left: 0;
-    width:100%;
-    z-index:-1;
-    opacity:1;
-}
-
-.greeting {
-    color:black;
-    text-shadow: 1px 1px 3px rgba(255,255,255, .5);
-    text-align: center;
-}
-
-.wikipedia-container {
-    float:right;
-    width:290px;
-    padding:10px;
-    margin-right: 10px;
-    background-color: rgba(255,255,255,0.7);
-}
-
-.nytimes-container {
-    padding: 10px;
-    margin-right:300px;
-    background-color: rgba(255,255,255,0.7);
-}
-
-.article-list {
+html, body, #map-canvas {
+    width: 100%;
+    height: 100%;
     margin: 0;
     padding: 0;
 }
-
-.article {
-    list-style-type: none;
-    padding:10px;
-    border-top: 1px solid #CCC;
-}
-.article:first-child {
-    border-top:none;
-}
-*/
 #map-canvas {
-    width:100%; 
-    height:500px; 
-    margin: 0; 
-    padding: 0;
+    position: relative;
+}
+.favorite-places-container {
+    padding: 5px;
+    width: 350px;
+    height: 200px;
+    max-height: 30%;
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    z-index: 99;
+    background: #ffffff;
+    opacity:.75;
+    border-radius: 15px;
+}
+.search-container {
+    width: 350px;
+    padding:5px;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    z-index: 99;
+    background: #ffffff;
+    opacity:.85;
+    border-radius: 15px;
+}
+.search-bar {
+    width: 96%;
+    border: 0;
+    font-size: 20px;
+    text-align: center;
 }

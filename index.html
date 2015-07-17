@@ -1,22 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Your Moving Companion</title>
     <link rel="stylesheet" href="css/style.css">
     <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvueBNv7_OYQdSPpB6t6dUgoj-HUAXwpg">
     </script>
 </head>
 <body>
+    <div>
+        <form id="search-container" class="search-container">
+           <input class="search-bar" placeholder="Search from the restaurant list" data-bind="textInput: searchBarText"/>
+        </form>
+    </div>
 
-    <form id="search-container" class="search-container">
-       Search: <input data-bind="textInput: searchBarText"/>
-    </form>
-
-    <hr>
 
     <div class="favorite-places-container">
-        <h3 id="places-header">Your favorite places</h3>
+
+
+        <h3 id="places-header">My favorite restaurants' list</h3>
         <ul id="places" data-bind="foreach: places" class="article-list">
             <li data-bind="text: title, visible: visibility, click: $root.match">
             </li>

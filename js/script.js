@@ -1,6 +1,40 @@
+//Location class
+var Location = function(data){
+    this.title = data.title;
+    this.visibility = true;
+    this.yelpId = data.yelpId;
+};
+
+Location.prototype.createMarker = function(location, bounds){
+
+    var marker = new google.maps.Marker({
+            map: map
+        });
+
+   var infowindow = new google.maps.InfoWindow();
+
+    google.maps.event.addListener(marker, 'click', function() {
+        infowindow.open(map, marker);
+    });
+
+    this.marker = marker;
+    this.infowindow = infowindow;
+
+    yelpOAuth.getYelpBusinessInfo(this, function(data){
+        bounds.extend(data);
+        map.fitBounds(bounds);
+    });
+
+};
+
+Location.prototype.getYelpBusinessInfo = function(location, bounds){
+
+
+};
+
 //YelpOAuth class
 var YelpOAuth = function() {
-    this.auth = {
+  this.auth = {
             consumerKey: "nsJaztWB593lsptA2C61gw",
             consumerSecret: "MDea2Xt-0joFt22F8DYqCo2pgcY",
             accessToken: "dCFwVSf6hSapbCrAf7Uyd9qsSsGWLvuc",
@@ -22,8 +56,6 @@ var YelpOAuth = function() {
                       ['oauth_signature_method', 'HMAC-SHA1']
                     ];
 };
-
-
 
 YelpOAuth.prototype.getYelpBusinessInfo = function(location, callback) {
     var businessUrl = 'http://api.yelp.com/v2/business/' + location.yelpId;
@@ -57,12 +89,7 @@ YelpOAuth.prototype.getYelpBusinessInfo = function(location, callback) {
 
         var contentHTML = yelpName + yelpStar;
 
-        //location.marker.setPosition(data)
         location.infowindow.setContent(contentHTML);
-        //console.log(textStats);
-        //console.log(data);
-        //$("body").append(data);
-
 
         var LatLngPoint = new google.maps.LatLng(position.lat, position.lng);
         callback(LatLngPoint);
@@ -74,56 +101,52 @@ YelpOAuth.prototype.getYelpBusinessInfo = function(location, callback) {
 };
 
 
-
-// global map variable
+//global variable
 var map;
 
 //initialize map
 google.maps.event.addDomListener(window, 'load', initialize);
 
-// location input
+
+var yelpOAuth = new YelpOAuth();
+
+
 var locationData = [
         {
             title: "Maple Ave Restaurant",
-            matchingIndex: 0,
             yelpId: 'maple-ave-restaurant-vienna'
         },
         {
             title: "Cava Mezze Grill",
-            matchingIndex: 0,
             yelpId: 'cava-mezze-grill-mclean'
         },
         {
             title: "Nielsens Frozen Custard",
-            matchingIndex: 0,
             yelpId: 'nielsens-frozen-custard-vienna'
         },
         {
             title: "Asia Taste",
-            matchingIndex: 0,
             yelpId: 'asia-taste-rockville-3'
         }
 ];
-
-
-var yelpOAuth = new YelpOAuth();
-
-var Location = function(data){
-    this.title = data.title;
-    this.matchingIndex = data.matchingIndex;
-    this.visibility = true;
-    //var yelpOAuth = new YelpOAuth();
-
-    this.yelpId = data.yelpId;
-
-    //yelpOAuth.getYelpBusinessInfo(data.yelpId);
-}
 
 var locationArray = [];
 for (var i = 0; i < locationData.length; i ++){
     locationArray.push(new Location(locationData[i]));
 
 }
+
+
+
+
+
+
+
+// location input
+
+
+
+
 
 
 
@@ -176,9 +199,20 @@ ko.applyBindings(new ViewModel());
 function initialize() {
 
     var mapOptions = {
-          center: { lat: 38.9047, lng: -77.0164},
-          zoom: 20
-    };
+        center: { lat: 38.9047, lng: -77.0164},
+        zoom: 20,
+        disableDefaultUI: true,
+        zoomControl: true,
+        zoomControlOptions: {
+            style: google.maps.ZoomControlStyle.SMALL,
+            position: google.maps.ControlPosition.LEFT_CENTER
+        },
+        mapTypeControl: true,
+        mapTypeControlOptions: {
+            position: google.maps.ControlPosition.LEFT_CENTER,
+        },
+        scaleControl: true
+        };
 
     map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
 
@@ -186,42 +220,21 @@ function initialize() {
 
     var bounds = new google.maps.LatLngBounds();
 
-        for(var i = 0; i < numOfLocation; i++){
-            createMarker(locationArray[i], bounds);
-
-            /*
-            var LatLngPoint = new google.maps.LatLng(locationArray[i].position.lat,
-                locationArray[i].position.lng);
-            latlngbounds.extend(LatLngPoint);
-            */
-        }
-
-}
-
-function createMarker(location, bounds) {
-    var contentString = location.name;
-
-    var marker = new google.maps.Marker({
-            map: map
-        //zIndex: Math.round(latlng.lat()*-100000)<<5
-        });
-
-
-   var infowindow = new google.maps.InfoWindow();
-
-    google.maps.event.addListener(marker, 'click', function() {
-        infowindow.open(map, marker);
-    });
-
-    location.marker = marker;
-    location.infowindow = infowindow;
-
-    yelpOAuth.getYelpBusinessInfo(location, function(data){
-        bounds.extend(data);
-        map.fitBounds(bounds);
-    });
+    for(var i = 0; i < numOfLocation; i++){
+        locationArray[i].createMarker(locationArray[i], bounds);
+    }
 
 }
 
 
 
+// url: http://www.yelp.com/syndicate/user/HgpXQsxlmOmBc5q6gA2fDg/rss.xml
+function parseRSS(url, callback) {
+  $.ajax({
+    url: document.location.protocol + '//ajax.googleapis.com/ajax/services/feed/load?v=1.0&num=10&callback=?&q=' + encodeURIComponent(url),
+    dataType: 'json',
+    success: function(data) {
+      callback(data.responseData.feed);
+    }
+  });
+}
