@@ -1,14 +1,41 @@
-//Location class
-var Location = function(data){
+//Yelp OAuth class
+var YelpOAuth = function() {
+    this.auth = {
+        consumerKey: "nsJaztWB593lsptA2C61gw",
+        consumerSecret: "MDea2Xt-0joFt22F8DYqCo2pgcY",
+        accessToken: "dCFwVSf6hSapbCrAf7Uyd9qsSsGWLvuc",
+        accessTokenSecret: "Z5KK2Wq_89AUoKMr6Uc6kxDzDbc",
+        serviceProvider: {signatureMethod: "HMAC-SHA1"}
+    };
+    this.accesor = {
+        consumerSecret: this.auth.consumerSecret,
+        tokenSecret: this.auth.accessTokenSecret
+    };
+    this.parameters = [
+      //parameters for search
+      //parameters.push(['term', terms]);
+      //parameters.push(['location', near]);
+        ['callback', 'cb'],
+        ['oauth_consumer_key', this.auth.consumerKey],
+        ['oauth_consumer_secret', this.auth.consumerSecret],
+        ['oauth_token', this.auth.accessToken],
+        ['oauth_signature_method', 'HMAC-SHA1']
+    ];
+};
+
+//Location class which represents each locations on the map
+var Location = function(data) {
     this.title = data.title;
     this.visibility = true;
     this.yelpId = data.yelpId;
 };
 
-Location.prototype.createMarker = function(location, bounds){
+//Method to create markers of the location on the map
+Location.prototype.createMarker = function() {
 
     var marker = new google.maps.Marker({
-            map: map
+            map: map,
+            icon: "img/yelp.png"
         });
 
    var infowindow = new google.maps.InfoWindow();
@@ -20,95 +47,101 @@ Location.prototype.createMarker = function(location, bounds){
     this.marker = marker;
     this.infowindow = infowindow;
 
-    yelpOAuth.getYelpBusinessInfo(this, function(data){
-        bounds.extend(data);
-        map.fitBounds(bounds);
+    this.getYelpBusinessInfo(function(data){
+        mapBounds.extend(data);
+        map.fitBounds(mapBounds);
     });
-
 };
 
-Location.prototype.getYelpBusinessInfo = function(location, bounds){
-
-
-};
-
-//YelpOAuth class
-var YelpOAuth = function() {
-  this.auth = {
-            consumerKey: "nsJaztWB593lsptA2C61gw",
-            consumerSecret: "MDea2Xt-0joFt22F8DYqCo2pgcY",
-            accessToken: "dCFwVSf6hSapbCrAf7Uyd9qsSsGWLvuc",
-            accessTokenSecret: "Z5KK2Wq_89AUoKMr6Uc6kxDzDbc",
-            serviceProvider: {signatureMethod: "HMAC-SHA1"}
-        };
-  this.accesor = {
-              consumerSecret: this.auth.consumerSecret,
-              tokenSecret: this.auth.accessTokenSecret
-              };
-  this.parameters = [
-                      //parameter for search
-                      //parameters.push(['term', terms]);
-                      //parameters.push(['location', near]);
-                      ['callback', 'cb'],
-                      ['oauth_consumer_key', this.auth.consumerKey],
-                      ['oauth_consumer_secret', this.auth.consumerSecret],
-                      ['oauth_token', this.auth.accessToken],
-                      ['oauth_signature_method', 'HMAC-SHA1']
-                    ];
-};
-
-YelpOAuth.prototype.getYelpBusinessInfo = function(location, callback) {
-    var businessUrl = 'http://api.yelp.com/v2/business/' + location.yelpId;
+// Method to use AJAX request to retrieve location information
+Location.prototype.getYelpBusinessInfo = function(callback) {
+    var self = this;
+    var businessUrl = 'http://api.yelp.com/v2/business/' + this.yelpId;
     var message = {
                     'action': businessUrl,
                     'method': 'GET',
-                    'parameters': this.parameters
+                    'parameters': yelpOAuth.parameters
                   }
-    var _accesor = this.accesor;
-  OAuth.setTimestampAndNonce(message);
-  OAuth.SignatureMethod.sign(message, _accesor);
-  var parameterMap = OAuth.getParameterMap(message.parameters);
-  parameterMap.oauth_signature = OAuth.percentEncode(parameterMap.oauth_signature);
-  $.ajax({
-    'url': message.action,
-    'data': parameterMap,
-    'cache': true,
-    'dataType': 'jsonp',
-    //'jsonpCallback': 'cb',
-    'success': function(data, textStats, XMLHttpRequest) {
+   //var _accesor = this.accesor;
+    OAuth.setTimestampAndNonce(message);
+    OAuth.SignatureMethod.sign(message, yelpOAuth.accesor);
+    var parameterMap = OAuth.getParameterMap(message.parameters);
+    parameterMap.oauth_signature = OAuth.percentEncode(parameterMap.oauth_signature);
+    $.ajax({
+        'url': message.action,
+        'data': parameterMap,
+        'cache': true,
+        'dataType': 'jsonp',
+        //'jsonpCallback': 'cb',
+        'success': function(data, textStats, XMLHttpRequest) {
+            var position = {
+                lat: data.location.coordinate.latitude,
+                lng: data.location.coordinate.longitude
+            }
 
-        var position = {
-            lat: data.location.coordinate.latitude,
-            lng: data.location.coordinate.longitude
+            self.marker.setPosition(position);
+            self.title = data.name;
+            console.log(self);
+
+            //console.log(data);
+
+
+            var yelpName = '<h3>' + data.name + '<h3>';
+            var yelpStar = '<img src="' + data.rating_img_url + '" alt="yelp star rating">';
+
+            var contentHTML = yelpName + yelpStar;
+
+            self.infowindow.setContent(contentHTML);
+
+            var LatLngPoint = new google.maps.LatLng(position.lat, position.lng);
+
+            callback(LatLngPoint);
+        },
+        'error': function(XMLHttpRequest, textStats, errorThrown){
+            console.log(errorThrown);
         }
-
-        location.marker.setPosition(position);
-
-        var yelpName = '<h3>' + data.name + '<h3>';
-        var yelpStar = '<img src="' + data.rating_img_url + '" alt="yelp star rating">';
-
-        var contentHTML = yelpName + yelpStar;
-
-        location.infowindow.setContent(contentHTML);
-
-        var LatLngPoint = new google.maps.LatLng(position.lat, position.lng);
-        callback(LatLngPoint);
-    },
-    'error': function(XMLHttpRequest, textStats, errorThrown){
-      console.log(errorThrown);
-    }
-  });
+    });
 };
 
+// view model of Knockout.js
+var ViewModel = function(){
+    // assign model itself to this variable
+    var self = this;
 
-//global variable
-var map;
+    self.searchBarText = ko.observable("");
 
-//initialize map
-google.maps.event.addDomListener(window, 'load', initialize);
+    //self.places = ko.observableArray(locationArray);
+    self.places = ko.mapping.fromJS(locationArray);
 
 
-var yelpOAuth = new YelpOAuth();
+    for (var i = 0; i < self.places().length; i++) {
+        //self.places()[i].visibility = ko.observable(true);
+        //self.places()[i].visibility = ko.observable(self.places()[i].matchingIndex);
+        console.log(self.places()[i].visibility);
+    }
+
+
+    self.searchBarText.subscribe(function(newValue) {
+        self.match();
+
+    });
+
+    self.match = function() {
+        var text = self.searchBarText().toLowerCase();
+        ko.utils.arrayForEach(self.places(), function(place, index) {
+            console.log(locationArray[index].marker.visible);
+            if (place.title().toLowerCase().search(text) < 0) {
+                place.visibility(false);
+                locationArray[index].marker.setVisible(false);
+                locationArray[index].infowindow.close();
+            }
+            else {
+                place.visibility(true);
+                locationArray[index].marker.setVisible(true);
+            }
+        });
+    }
+}
 
 
 var locationData = [
@@ -133,69 +166,23 @@ var locationData = [
 var locationArray = [];
 for (var i = 0; i < locationData.length; i ++){
     locationArray.push(new Location(locationData[i]));
-
 }
 
+var yelpOAuth = new YelpOAuth();
 
 
+//global google map variable
+var map;
+var mapBounds;
+//initialize map
+google.maps.event.addDomListener(window, 'load', initialize);
 
+createKnockoutBinding();
 
-
-
-// location input
-
-
-
-
-
-
-
-
-var ViewModel = function(){
-    // assign model itself to this variable
-    var self = this;
-
-    self.searchBarText = ko.observable("");
-
-    //self.places = ko.observableArray(locationArray);
-    self.places = ko.mapping.fromJS(locationArray);
-
-
-    for (var i = 0; i < self.places().length; i++) {
-        //self.places()[i].visibility = ko.observable(true);
-        //self.places()[i].visibility = ko.observable(self.places()[i].matchingIndex);
-        console.log(self.places()[i].visibility);
-    }
-
-
-    self.searchBarText.subscribe(function(newValue) {
-        self.match();
-
-    });
-
-    self.match = function() {
-        //console.log(element);
-
-        var text = self.searchBarText().toLowerCase();
-        ko.utils.arrayForEach(self.places(), function(place, index) {
-            console.log(locationArray[index].marker.visible);
-            if (place.title().toLowerCase().search(text) < 0) {
-                place.visibility(false);
-                locationArray[index].marker.setVisible(false);
-                locationArray[index].infowindow.close();
-            }
-            else {
-                place.visibility(true);
-                locationArray[index].marker.setVisible(true);
-            }
-        });
-    }
+function createKnockoutBinding(){
+    ko.applyBindings(new ViewModel());
 }
-
-ko.applyBindings(new ViewModel());
-
-
-
+// google map's initilization method
 function initialize() {
 
     var mapOptions = {
@@ -207,25 +194,31 @@ function initialize() {
             style: google.maps.ZoomControlStyle.SMALL,
             position: google.maps.ControlPosition.LEFT_CENTER
         },
-        mapTypeControl: true,
-        mapTypeControlOptions: {
-            position: google.maps.ControlPosition.LEFT_CENTER,
-        },
-        scaleControl: true
-        };
+        scaleControl: true,
+
+        styles: [
+          {
+            "stylers": [
+              { "hue": "#ff2b00" },
+              { "visibility": "simplified" },
+              { "weight": 2 },
+              { "saturation": -49 },
+              { "gamma": 1.09 },
+              { "lightness": 15 }
+            ]
+          }
+        ]
+    };
 
     map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+    mapBounds = new google.maps.LatLngBounds();
 
-    var numOfLocation = locationArray.length;
+    locationArray.forEach(function(location){
+        location.createMarker();
+    });
 
-    var bounds = new google.maps.LatLngBounds();
-
-    for(var i = 0; i < numOfLocation; i++){
-        locationArray[i].createMarker(locationArray[i], bounds);
-    }
 
 }
-
 
 
 // url: http://www.yelp.com/syndicate/user/HgpXQsxlmOmBc5q6gA2fDg/rss.xml
