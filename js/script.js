@@ -24,10 +24,13 @@ var YelpOAuth = function() {
 };
 
 //Location class which represents each locations on the map
-var Location = function(data) {
-    this.title = data.title;
+var Location = function(yelpRSSentry) {
+    //console.log(yelpRSSentry.content);
+    this.title = yelpRSSentry.title.substring(0, yelpRSSentry.title.indexOf(' ('));
+    this.yelpId = yelpRSSentry.link.substring(yelpRSSentry.link.lastIndexOf("biz/")+4, yelpRSSentry.link.indexOf('?'));
     this.visibility = true;
-    this.yelpId = data.yelpId;
+    this.reviewUrl = yelpRSSentry.link;
+    this.reviewContent = yelpRSSentry.content;
 };
 
 //Method to create markers of the location on the map
@@ -37,8 +40,7 @@ Location.prototype.createMarker = function() {
             map: map,
             icon: "img/yelp.png"
         });
-
-   var infowindow = new google.maps.InfoWindow();
+    var infowindow = new google.maps.InfoWindow();
 
     google.maps.event.addListener(marker, 'click', function() {
         infowindow.open(map, marker);
@@ -81,15 +83,15 @@ Location.prototype.getYelpBusinessInfo = function(callback) {
 
             self.marker.setPosition(position);
             self.title = data.name;
-            console.log(self);
+            //console.log(self);
 
             //console.log(data);
+            console.log(self.reviewUrl);
+            var yelpReview =  "<p>"  + self.reviewContent + " -> <a target='_blank' href=" + self.reviewUrl + "> read full review</a></p>";
+            var yelpName = '<h3>' + data.name + '</h3>';
+            var yelpStar = '<img src="' + data.rating_img_url + '" alt="yelp star rating"><br>';
 
-
-            var yelpName = '<h3>' + data.name + '<h3>';
-            var yelpStar = '<img src="' + data.rating_img_url + '" alt="yelp star rating">';
-
-            var contentHTML = yelpName + yelpStar;
+            var contentHTML = yelpName + yelpStar + yelpReview;
 
             self.infowindow.setContent(contentHTML);
 
@@ -111,25 +113,19 @@ var ViewModel = function(){
     self.searchBarText = ko.observable("");
 
     //self.places = ko.observableArray(locationArray);
+    //console.log(locationArray);
     self.places = ko.mapping.fromJS(locationArray);
-
-
-    for (var i = 0; i < self.places().length; i++) {
-        //self.places()[i].visibility = ko.observable(true);
-        //self.places()[i].visibility = ko.observable(self.places()[i].matchingIndex);
-        console.log(self.places()[i].visibility);
-    }
 
 
     self.searchBarText.subscribe(function(newValue) {
         self.match();
-
     });
 
     self.match = function() {
         var text = self.searchBarText().toLowerCase();
         ko.utils.arrayForEach(self.places(), function(place, index) {
-            console.log(locationArray[index].marker.visible);
+            console.log(place);
+            //console.log(locationArray[index].marker.visible);
             if (place.title().toLowerCase().search(text) < 0) {
                 place.visibility(false);
                 locationArray[index].marker.setVisible(false);
@@ -141,47 +137,49 @@ var ViewModel = function(){
             }
         });
     }
+
+
+    self.itemClicked = function(clickedItemIndex) {
+
+        var clickedLocation = locationArray[clickedItemIndex];
+        ko.utils.arrayForEach(self.places(), function(place, index) {
+            locationArray[index].infowindow.close();
+        });
+
+        clickedLocation.infowindow.open(map, clickedLocation.marker);
+        map.setCenter(clickedLocation.marker.getPosition());
+    }
 }
 
 
-var locationData = [
-        {
-            title: "Maple Ave Restaurant",
-            yelpId: 'maple-ave-restaurant-vienna'
-        },
-        {
-            title: "Cava Mezze Grill",
-            yelpId: 'cava-mezze-grill-mclean'
-        },
-        {
-            title: "Nielsens Frozen Custard",
-            yelpId: 'nielsens-frozen-custard-vienna'
-        },
-        {
-            title: "Asia Taste",
-            yelpId: 'asia-taste-rockville-3'
-        }
-];
 
-var locationArray = [];
-for (var i = 0; i < locationData.length; i ++){
-    locationArray.push(new Location(locationData[i]));
-}
 
 var yelpOAuth = new YelpOAuth();
-
-
 //global google map variable
 var map;
 var mapBounds;
+var locationArray;
+
+var locationData = [
+];
+
+locationArray = [];
+for (var i = 0; i < locationData.length; i ++){
+    locationArray.push(new Location(locationData[i].title, locationData[i].yelpId));
+}
+
+
 //initialize map
 google.maps.event.addDomListener(window, 'load', initialize);
+//var viewModel = new ViewModel();
 
-createKnockoutBinding();
+viewModel = new ViewModel();
+console.log(viewModel.places);
+ko.applyBindings(viewModel);
 
-function createKnockoutBinding(){
-    ko.applyBindings(new ViewModel());
-}
+parseRSS("http://www.yelp.com/syndicate/user/HgpXQsxlmOmBc5q6gA2fDg/rss.xml");
+
+
 // google map's initilization method
 function initialize() {
 
@@ -198,36 +196,42 @@ function initialize() {
 
         styles: [
           {
-            "stylers": [
-              { "hue": "#ff2b00" },
-              { "visibility": "simplified" },
-              { "weight": 2 },
-              { "saturation": -49 },
-              { "gamma": 1.09 },
-              { "lightness": 15 }
-            ]
+    "stylers": [
+      { "invert_lightness": true },
+      { "hue": "#00ddff" },
+      { "visibility": "simplified" }
+    ]
           }
         ]
     };
 
     map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
     mapBounds = new google.maps.LatLngBounds();
-
     locationArray.forEach(function(location){
         location.createMarker();
     });
-
-
 }
 
 
+
+//ko.mapping.fromJS(locationArray.push(new Location("haha", "test")), viewModel);
+//ko.mapping.fromJS(locationArray, this.places);
+
 // url: http://www.yelp.com/syndicate/user/HgpXQsxlmOmBc5q6gA2fDg/rss.xml
-function parseRSS(url, callback) {
+function parseRSS(url) {
   $.ajax({
     url: document.location.protocol + '//ajax.googleapis.com/ajax/services/feed/load?v=1.0&num=10&callback=?&q=' + encodeURIComponent(url),
     dataType: 'json',
     success: function(data) {
-      callback(data.responseData.feed);
+      //ko.mapping.fromJS(locationArray, this.places);
+    var data = data.responseData.feed;
+
+    data.entries.forEach(function(yelpRSSentry){
+        var yelpRSSLocation = new Location(yelpRSSentry);
+        locationArray.push(yelpRSSLocation);
+        ko.mapping.fromJS(locationArray, viewModel.places);
+    });
     }
   });
 }
+

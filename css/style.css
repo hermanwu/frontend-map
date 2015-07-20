@@ -8,6 +8,10 @@ html, body, #map-canvas {
 #map-canvas {
     position: relative;
 }
+li:hover {
+    background-color: #efaeac;
+    cursor: pointer;
+}
 .favorite-places-container {
     padding: 5px;
     width: 350px;
@@ -36,5 +40,13 @@ html, body, #map-canvas {
     width: 96%;
     border: 0;
     font-size: 20px;
+    text-align: center;
+}
+#places-list {
+    height: 60%;
+    overflow:hidden;
+    overflow-y:scroll;
+}
+#places-header {
     text-align: center;
 }
