@@ -10,7 +10,7 @@ This single page application is used to practice
 
 3: Google Map API
 
-4： Yelp API and RRS requests
+4: Yelp API and RRS requests
 
 
 How to use the application:
