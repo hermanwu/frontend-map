@@ -21,13 +21,21 @@ var YelpCommunication = function() {
     this.rssUrl = "http://www.yelp.com/syndicate/user/HgpXQsxlmOmBc5q6gA2fDg/rss.xml";
 };
 
-// Method to get my recent yelp review through yelp RSS call
+// Method to get my recent yelp reviews through yelp RSS call
 YelpCommunication.prototype.getRRS = function(){
+    // Method to handle yelp API request error
+    var yelpRequestTimeout = setTimeout(function() {
+        $("#places-header").text("failed to retrieve review list");
+        $("#search-container").text("failed to retrieve review list");
+    }, 8000);
+    // Ajax call to get yelp review list
     $.ajax({
         url: document.location.protocol + "//ajax.googleapis.com/ajax/services/feed/load?v=1.0&num=10&callback=?&q=" + encodeURIComponent(this.rssUrl),
         dataType: 'json',
         success: function(data) {
-            // handle the situation that RSS call returns nothing
+            // Clear the time out method if yelp request finsihes successfully
+            clearTimeout(yelpRequestTimeout);
+            // Handle the situation that RSS call returns nothing
             if (data == null || data.responseData == null) {
                 $("#places-header").text("failed to retrieve review list");
             } else {
@@ -39,9 +47,6 @@ YelpCommunication.prototype.getRRS = function(){
                     ko.mapping.fromJS(locationArray, viewModel.places);
                 });
             }
-        },
-        error: function(data) {
-            $("#places-header").text("failed to make yelp RSS call");
         }
     });
 };
@@ -123,7 +128,7 @@ Location.prototype.getYelpBusinessInfo = function(callback) {
     var parameterMap = OAuth.getParameterMap(message.parameters);
     parameterMap.oauth_signature = OAuth.percentEncode(parameterMap.oauth_signature);
 
-    // Method to handle yelp request error
+    // Method to handle yelp API request error
     var yelpRequestTimeout = setTimeout(function() {
         $("#places-header").text("failed to get location information");
     }, 8000);
