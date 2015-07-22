@@ -1,52 +1,70 @@
-
-html, body, #map-canvas {
+html,
+body {
     width: 100%;
     height: 100%;
     margin: 0;
     padding: 0;
 }
-#map-canvas {
-    position: relative;
-}
+
 li:hover {
-    background-color: #efaeac;
+    background-color: #EAA;
     cursor: pointer;
 }
+
+.map-canvas {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
 .favorite-places-container {
     padding: 5px;
     width: 350px;
     height: 200px;
     max-height: 30%;
     position: absolute;
-    bottom: 0px;
-    left: 0px;
+    bottom: 0;
+    left: 0;
     z-index: 99;
-    background: #ffffff;
-    opacity:.75;
+    background: #FFF;
+    opacity: .75;
     border-radius: 15px;
 }
+
 .search-container {
     width: 350px;
     padding:5px;
     position: absolute;
-    top: 0px;
-    left: 0px;
+    top: 0;
+    left: 0;
     z-index: 99;
-    background: #ffffff;
+    background: #FFF;
     opacity:.85;
     border-radius: 15px;
 }
+
 .search-bar {
     width: 96%;
     border: 0;
-    font-size: 20px;
+    font-size: 1em;
     text-align: center;
 }
-#places-list {
+
+.places-list {
     height: 60%;
-    overflow:hidden;
-    overflow-y:scroll;
+    overflow: hidden;
+    overflow-y: scroll;
 }
-#places-header {
+
+.places-header {
     text-align: center;
+    display: block;
+}
+
+.internet-warning {
+    text-align: center;
+    color: red;
+    display: none;
 }
