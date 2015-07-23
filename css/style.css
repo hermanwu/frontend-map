@@ -29,19 +29,19 @@ li:hover {
     left: 0;
     z-index: 99;
     background: #FFF;
-    opacity: .75;
+    opacity: 0.75;
     border-radius: 15px;
 }
 
 .search-container {
     width: 350px;
-    padding:5px;
+    padding: 5px;
     position: absolute;
     top: 0;
     left: 0;
     z-index: 99;
     background: #FFF;
-    opacity:.85;
+    opacity: 0.85;
     border-radius: 15px;
 }
 

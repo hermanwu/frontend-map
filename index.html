@@ -1,37 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Latest Yelp Reviews</title>
-    <link rel="stylesheet" href="css/style.css">
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvueBNv7_OYQdSPpB6t6dUgoj-HUAXwpg">
-    </script>
-</head>
-<body>
-    <div>
-        <form id="search-container" class="search-container">
-           <input class="search-bar" placeholder="Search my review list" data-bind="textInput: searchBarText"/>
-        </form>
-    </div>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>My Latest Yelp Reviews</title>
+        <link rel="stylesheet" href="css/style.css">
+        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvueBNv7_OYQdSPpB6t6dUgoj-HUAXwpg">
+        </script>
+    </head>
+    <body>
+        <div>
+            <form id="search-container" class="search-container">
+               <input class="search-bar" placeholder="Search my review list" data-bind="textInput: searchBarText"/>
+            </form>
+        </div>
 
-    <div class="favorite-places-container">
-        <h3 class="internet-warning">Please check internet connection</h3>
-        <h3 class="places-header">My recent yelp reviews</h3>
-        <ul class="places-list" data-bind="foreach: places" class="article-list">
-            <li data-bind="text: title, visible: visibility, click: $parent.itemClicked.bind($data, $index())">
-            </li>
-        </ul>
-    </div>
+        <div class="favorite-places-container">
+            <h3 class="internet-warning">Please check internet connection</h3>
+            <h3 class="places-header">My recent yelp reviews</h3>
+            <ul class="places-list article-list" data-bind="foreach: places">
+                <li data-bind="text: title, visible: visibility, click: $parent.itemClicked.bind($data, $index())">
+                </li>
+            </ul>
+        </div>
 
-    <div id="map-canvas" class="map-canvas"></div>
+        <div id="map-canvas" class="map-canvas"></div>
 
-    <script src="bower_components/jquery/dist/jquery.js"></script>
-    <script src="bower_components/knockout/dist/knockout.js"></script>
-    <script src="js/libs/knockout.mapping-latest.js"></script>
-    <script src="js/libs/oauth.js"></script>
-    <script src="js/libs/sha1.js"></script>
-    <script src="js/bundle.js"></script>
-    <script src="js/script.js"></script>
-</body>
+        <script src="bower_components/jquery/dist/jquery.js"></script>
+        <script src="bower_components/knockout/dist/knockout.js"></script>
+        <script src="js/libs/knockout.mapping-latest.js"></script>
+        <script src="js/libs/oauth.js"></script>
+        <script src="js/libs/sha1.js"></script>
+        <script src="js/bundle.js"></script>
+        <script src="js/script.js"></script>
+    </body>
 </html>

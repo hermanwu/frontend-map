@@ -28,6 +28,7 @@ YelpCommunication.prototype.getRRS = function(){
     var yelpRequestTimeout = setTimeout(function() {
         $(".places-header").text("failed to retrieve review list");
         $(".internet-warning").css("display", "block");
+        $(".places-header").css("display", "none");
     }, 5000);
     // Ajax call to get yelp review list
     $.ajax({
@@ -102,13 +103,23 @@ Location.prototype.createMarker = function() {
         };
         // Add marker to the map
         self.marker.setPosition(position);
+
+        // dynamic html elements of info bubble window
+        var HTMLyelpImage ="<img style='float: right; margin: 10px;' src='%data%' alt='location image'><br>";
+        var HTMLyelpName = "<h2>%data%</h2>";
+        var HTMLyelpStar = "<img src='%data%' alt='yelp star rating'>";
+        var HTMLyelpUrl = "<h3><a target='_blank' href='%data%'>view business details</a></h3>";
+        var HTMLyelpReview = "<p><i><b>My Review</b></i>: %data% -> "
+        var HTMLyelpReviewUrl = "<a target='_blank' href='%data%'> read full review</a></p>";
+
         // Build info bubble's content
-        var yelpLocationImage = "<img style='float: right; margin: 10px;' src='" + yelpAPIResponse.image_url + "' alt='location image'><br>";
-        var yelpName = "<h2>" + self.title + "</h2>";
-        var yelpStar = "<img src='" + yelpAPIResponse.rating_img_url + "' alt='yelp star rating'>";
-        var yelpUrl =  "<h3><a target='_blank' href=" + yelpAPIResponse.mobile_url + ">view business details</a></h3>";
-        var yelpReview =  "<p><i><b>My Review</i></b>: "  + self.reviewContent + " -> <a target='_blank' href=" + self.reviewUrl + "> read full review</a></p>";
-        var contentHTML = yelpLocationImage + yelpName + yelpStar + yelpUrl +  yelpReview;
+        var yelpLocationImage = HTMLyelpImage.replace("%data%", yelpAPIResponse.image_url);
+        var yelpName = HTMLyelpName.replace("%data%", self.title);
+        var yelpStar = HTMLyelpStar.replace("%data%", yelpAPIResponse.rating_img_url);
+        var yelpUrl = HTMLyelpUrl.replace("%data%", yelpAPIResponse.mobile_url);
+        var yelpReview = HTMLyelpReview.replace("%data%", self.reviewContent);
+        var yelpReviewUrl = HTMLyelpReviewUrl.replace("%data%", self.reviewUrl);
+        var contentHTML = yelpLocationImage + yelpName + yelpStar + yelpUrl +  yelpReview + yelpReviewUrl;
         // Add html content to the bubble
         self.infoBubble.setContent(contentHTML);
         // Extend google map's bound
@@ -261,9 +272,11 @@ function checkInternetConnection() {
             error: function(){
                 console.log("Internet seems to be disconnected");
                 $(".internet-warning").css("display", "block");
+                $(".places-header").css("display", "none");
             },
             success: function() {
                 $(".internet-warning").css("display", "none");
+                $(".places-header").css("display", "block");
             },
         });
     }, 5000);
